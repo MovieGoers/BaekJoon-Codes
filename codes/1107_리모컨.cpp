@@ -9,10 +9,6 @@ vector<int> availables;
 vector<int> madeValues;
 vector<int> stack;
 
-void stuff() {
-
-}
-
 int abs(int a) {
 	if (a < 0)
 		return -1 * a;
