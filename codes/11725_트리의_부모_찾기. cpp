@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <unordered_map>
+#include <vector>
+using namespace std;
+
+unordered_map<int, vector<int>> tree;
+unordered_map<int, int> parent;
+
+void CheckParentsDFS(int root){
+    for(auto & elem : tree[root]){
+        if(parent[elem] == 0 && elem != 1){
+            parent[elem] = root;
+            CheckParentsDFS(elem);
+        }
+    }
+}
+
+int main(){
+    int N;
+
+    scanf("%d", &N);
+
+    for(int i=0;i<N-1;i++){
+        int a, b;
+        scanf("%d %d", &a, &b);
+        tree[a].push_back(b);
+        tree[b].push_back(a);
+    }
+    CheckParentsDFS(1);
+    
+    for(int i=2;i<=N;i++){
+        printf("%d\n", parent[i]);
+    }
+
+    return 0;
+}
