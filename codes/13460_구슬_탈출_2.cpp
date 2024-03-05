@@ -1,12 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-// 미완성 코드!!!!!!!!!!
-
-// TODO.
-// 실제로 구슬이 이동하는 것을 구현하지 못함. 그로 인한 오류 발생 (map 배열에 업데이트가 되지 않은 상태.)
-
 #include <stdio.h>
 #include <queue>
+
+#define INTMAX 9999999
 
 using namespace std;
 
@@ -62,17 +59,13 @@ Points MakeNewPoints(Points currentPoints, char direction) {
 	else if (direction == 'D') {
 		dH = 1;
 	}
-
 	// 파란 구슬 이동.
 	do {
 		newBlueH += dH;
 		newBlueW += dW;
 
-		if (map[newBlueH][newBlueW] == '.')
-			continue;
-
 		// 새롭게 이동한 파란 구슬이 벽 또는 빨간 구슬에 있는 경우, 그전 위치로 이동 후 종료.
-		if (map[newBlueH][newBlueW] == '#' || map[newBlueH][newBlueW] == 'R') {
+		if (map[newBlueH][newBlueW] == '#' || (newBlueH == newRedH && newBlueW == newRedW)) {
 			newBlueH -= dH;
 			newBlueW -= dW;
 			break;
@@ -80,25 +73,29 @@ Points MakeNewPoints(Points currentPoints, char direction) {
 
 		// 파란 구슬이 구멍에 들어가는 경우 그 자리에서 종료.
 		if (map[newBlueH][newBlueW] == 'O') {
-			break;
+			currentPoints.blueH = newBlueH;
+			currentPoints.blueW = newBlueW;
+			currentPoints.movedCnt += 1;
+			currentPoints.prevAction = direction;
+			return currentPoints;
 		}
 	} while (1);
+
+	bool isRedIn = false;
 
 	// 빨간 구슬 이동.
 	do {
 		newRedH += dH;
 		newRedW += dW;
 
-		if (map[newRedH][newRedW] == '.')
-			continue;
-
-		if (map[newRedH][newRedW] == '#' || map[newRedH][newRedH] == 'B') {
+		if (map[newRedH][newRedW] == '#' || (newBlueH == newRedH && newBlueW == newRedW)) {
 			newRedH -= dH;
 			newRedW -= dW;
 			break;
 		}
 
 		if (map[newRedH][newRedW] == 'O') {
+			isRedIn = true;
 			break;
 		}
 	} while (1);
@@ -108,14 +105,19 @@ Points MakeNewPoints(Points currentPoints, char direction) {
 		newBlueH += dH;
 		newBlueW += dW;
 
-		if (map[newBlueH][newBlueW] == '.')
-			continue;
-
 		// 새롭게 이동한 파란 구슬이 벽 또는 빨간 구슬에 있는 경우, 그전 위치로 이동 후 종료.
-		if (map[newBlueH][newBlueW] == '#' || map[newBlueH][newBlueW] == 'R') {
+		if (map[newBlueH][newBlueW] == '#') {
 			newBlueH -= dH;
 			newBlueW -= dW;
 			break;
+		}
+
+		if ((newBlueH == newRedH && newBlueW == newRedW)) {
+			if (!isRedIn) {
+				newBlueH -= dH;
+				newBlueW -= dW;
+				break;
+			}
 		}
 
 		// 파란 구슬이 구멍에 들어가는 경우 그 자리에서 종료.
@@ -130,7 +132,6 @@ Points MakeNewPoints(Points currentPoints, char direction) {
 	currentPoints.redW = newRedW;
 	currentPoints.movedCnt += 1;
 	currentPoints.prevAction = direction;
-	printf("RED : %d %d, BLUE : %d %d, prevAction : %c \n", currentPoints.redH, currentPoints.redW, currentPoints.blueH, currentPoints.blueW, currentPoints.prevAction);
 	return currentPoints;
 };
 
@@ -140,17 +141,17 @@ void DoDFS(Points initPoints) {
 
 	pointsQ.push(initPoints);
 
-	while ( !pointsQ.empty() ) {
+	while (!pointsQ.empty()) {
 		// 1. 큐 Pop.
 		Points currentPoints = pointsQ.front();
 		pointsQ.pop();
 
 		// 2. 조건 만족하는 지 파악 (빨간 구슬이 구멍에 들어갔는지 등)
-		
+
 		// 만약 이동 횟수가 10번 이상이라면 더이상 탐색 안함. (구현 필요.)
 		if (currentPoints.movedCnt > 10)
 			continue;
-		
+
 		if (IsBlueInHole(currentPoints))
 			continue;
 
@@ -158,9 +159,8 @@ void DoDFS(Points initPoints) {
 			// 최소 이동 거리인지 확인 및 업데이트.
 			if (currentPoints.movedCnt < minCnt) {
 				minCnt = currentPoints.movedCnt;
-				printf("RED : %d %d, BLUE : %d %d\n", currentPoints.redH, currentPoints.redW, currentPoints.blueH, currentPoints.blueW);
 			}
-			continue;
+			break;
 		}
 
 		// 3. 다음 기울인 경우들 생성 및 큐 Push.
@@ -182,7 +182,7 @@ void DoDFS(Points initPoints) {
 }
 
 int main() {
-	minCnt = 999999;
+	minCnt = INTMAX;
 
 	scanf("%d %d", &mapHeight, &mapWidth);
 
@@ -211,7 +211,10 @@ int main() {
 
 	DoDFS(initPoints);
 
-	printf("%d", minCnt);
+	if (minCnt != INTMAX)
+		printf("%d", minCnt);
+	else
+		printf("-1");
 
 	return 0;
 }
