@@ -1,91 +1,84 @@
-/*
-미완성 코드 입니다!!!!!!!!
-*/
-#include <iostream>
-#include <vector>
-#include <stack>
+#include <stdio.h>
+#include <memory.h>
 
 using namespace std;
 
 int N, M, H;
-int minAnswer = 9999;
+int min = 99999999;
+int depthLimit = 0;
+
+bool ladders[31][11];
+bool resultFlag = false;
 
 void Swap(int* a, int* b) {
 	int temp = *a;
 	*a = *b;
 	*b = temp;
-};
+}
 
-struct Ladder {
-	vector<int> ladder[31]; // ladder[4][0] = 3 -> 4번 점선의 0번째 index에 있는 값 3은 4번 점선에서 3번 세로줄, 4번(3 + 1) 세로줄이 연결되어 있음을 의미.
-	int addedCnt;
-};
-
-vector<int> originalLadder[31]; // 이미 그려진 가로선들을 저장함.
-
-vector<Ladder> ladders; // 만들어진 사다리들의 모든 경우를 저장해놓은 Vector.
-
-bool CheckIfCorrectLadder(Ladder ladder) {
-	int vertical[11] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+bool CheckLadderResult() {
+	int arr[11] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 	for (int h = 1; h <= H; h++) {
-		int indexSize = ladder.ladder[h].size();
-		for (int i = 0; i < indexSize; i++) {
-			Swap(&vertical[ladder.ladder[h][i]], &vertical[ladder.ladder[h][i] + 1]);
+		for (int n = 1; n < N; n++) {
+			if (ladders[h][n]) {
+				Swap(&arr[n], &arr[n+1]);
+			}
 		}
 	}
 
 	for (int i = 1; i <= N; i++) {
-		if (vertical[i] != i)
+		
+		if (arr[i] != i)
 			return false;
 	}
+	
 
 	return true;
-};
+}
 
-void CheckAllLadders() {
-	int laddersSize = ladders.size();
+void DoDFS(int depth, int prevH) {
+	if (depth == depthLimit) {
+		if (CheckLadderResult()) {
+			if (depth < min)
+				min = depth;
+		}
+		return;
+	}
 
-	for (int i = 0; i < laddersSize; i++) {
-		// ladders[i]를 가지고 결과가 조건에 맞는 경우 addedCnt를 확인.
-		if (CheckIfCorrectLadder(ladders[i])) {
-			if (ladders[i].addedCnt < minAnswer) {
-				minAnswer = ladders[i].addedCnt;
+	for (int h = prevH; h <= H; h++) {
+		for (int n = 1; n < N; n++) {
+			// 현재 사다리를 놓으려는 근처에 다른 사다리가 존재하는 경우,
+			if (ladders[h][n - 1] || ladders[h][n] || ladders[h][n + 1]) {
+				continue;
 			}
+
+			ladders[h][n] = true;
+			DoDFS(depth + 1, h);
+			ladders[h][n] = false;
 		}
 	}
 }
 
-void MakeLadders() {
-	Ladder newLadder;
-	newLadder.addedCnt = 0;
-
-	for (int h = 1; h <= H; h++) {
-		// newLadder.ladder[h] 벡터에, 이어질 사다리들을 모두 push_back.
-		vector<int> availables;
-
-	}
-}
-
 int main() {
-	cin >> N >> M >> H;
+	scanf("%d%d%d", &N, &M, &H);
+
+	memset(ladders, false, sizeof(ladders));
 
 	for (int i = 0; i < M; i++) {
 		int a, b;
-
-		cin >> a >> b;
-		originalLadder[a].push_back(b);
+		scanf("%d%d", &a, &b);
+		ladders[a][b] = true;
 	}
 
-	// 사다리 만들기. (Ladders 벡터 저장.)
-	MakeLadders();
+	for (int i = 0; i <= 3; i++) {
+		depthLimit = i;
+		DoDFS(0, 1);
+	}
 
-	// 각 사다리 조건에 맞는지 확인.
-	CheckAllLadders();
-
-	if (minAnswer > 3)
-		cout << -1;
+	if (min <= 3)
+		printf("%d", min);
 	else
-		cout << minAnswer;
+		printf("-1");
 
 	return 0;
 }
