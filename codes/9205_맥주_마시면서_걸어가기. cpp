@@ -1,0 +1,103 @@
+#include <iostream>
+#include <cstring>
+#include <string>
+#include <queue>
+#include <utility>
+#include <unordered_map>
+
+using namespace std;
+
+int T;
+struct testcase{
+    int n; // 맥주 파는 편의점 수
+    pair<int, int> homePos;
+    vector<pair<int, int>> convPos;
+    pair<int, int> festivalPos;
+};
+vector<testcase> testcases;
+vector<string> answers;
+
+void HandleInput(){
+    cin >> T;
+    for(int i=0;i<T;i++){
+        testcase newTestcase;
+        cin >> newTestcase.n;
+        cin >> newTestcase.homePos.first >> newTestcase.homePos.second;
+        for(int j=0;j<newTestcase.n;j++){
+            int newConvPosX,newConvPosY;
+            cin >> newConvPosX >> newConvPosY;
+
+            newTestcase.convPos.push_back({newConvPosX, newConvPosY});
+        }
+        cin >> newTestcase.festivalPos.first >> newTestcase.festivalPos.second;
+
+        testcases.push_back(newTestcase);
+    }
+}
+
+int Abs(int x){
+    if(x < 0)
+        return -x;
+    return x;
+}
+
+int GetManhattanDistance(pair<int, int> a, pair<int, int> b){
+    return Abs(a.first-b.first) + Abs(a.second-b.second);
+}
+
+void DoBFS(int t){
+    queue<pair<int, int>> Q;
+    unordered_map<int, bool> visited;
+    int convSize = testcases[t].convPos.size();
+
+    // 시작 좌표를 큐에 입력.
+    Q.push(testcases[t].homePos);
+
+    while(!Q.empty()){
+        pair<int, int> currentPos = Q.front();
+        Q.pop();
+
+        // 현재 위치에서 목표 위치로 갈 수 있는 경우,
+        if(GetManhattanDistance(currentPos, testcases[t].festivalPos) <= 1000){
+            answers.push_back("happy");
+            return;
+        }
+
+        for(int c=0;c<convSize;c++){
+            // 이미 방문했던 경우,
+            if(visited[c])
+                continue;
+
+            // 현재 위치에서 이동할 수 없는 경우,
+            if(GetManhattanDistance(currentPos, testcases[t].convPos[c]) > 1000)
+                continue;
+            
+            visited[c] = true;
+            Q.push(testcases[t].convPos[c]);
+        }
+    }
+
+    // 이동할 수 있는 모든 경우를 탐색하였으나 도달하지 못한 경우.
+    answers.push_back("sad");
+}
+
+void SolveProblem(){
+    for(int t=0;t<T;t++){
+        DoBFS(t);
+    }
+}
+
+void PrintAnswer(){
+    for(int t=0;t<T;t++){
+        cout << answers[t] << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);cin.tie(NULL); cout.tie(NULL);
+    HandleInput();
+    SolveProblem();
+    PrintAnswer();
+
+    return 0;
+}
